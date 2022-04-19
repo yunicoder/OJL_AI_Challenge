@@ -1,0 +1,11 @@
+tensorflow-gpu==1.1.0
+keras==1.2.0
+scikit-learn==0.20.0
+tqdm
+opencv-python
+h5py
+python-engineio==3.13.2
+python-socketio==4.6.1
+eventlet
+pillow
+flask
