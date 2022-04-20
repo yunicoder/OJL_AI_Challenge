@@ -11,7 +11,7 @@ from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D, Dropout, Ma
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 
-from models.resnet import resnet50_model
+from utils.resnet import resnet50_model
 from keras.backend import tensorflow_backend as backend
 
 
@@ -19,8 +19,8 @@ from keras.backend import tensorflow_backend as backend
 NVIDIA = "nvidia"
 RESNET50 = "resnet50"
 
-# MODEL_NAME = NVIDIA
-MODEL_NAME = RESNET50
+MODEL_NAME = NVIDIA
+# MODEL_NAME = RESNET50
 
 
 def getrowsFromDrivingLogs(dataPath):
@@ -47,11 +47,20 @@ def getImagesAndSteerings(rows):
     for row in tqdm(rows):
         #angle
         steering = float(row[3])
+        
+        # 左右のカメラのステアリング測定値を調整します
+        parameter = 0.15 
+        # このパラメータが調整用の値です。
+        # 左のカメラはステアリング角度が実際よりも低めに記録されているので、少し値を足してやります。右のカメラはその逆です。
+        steering_left = steering + parameter
+        steering_right = steering - parameter
+        
         #center
         getImageArray3angle(row[0], steering, images, steerings)
         #left
-
+        getImageArray3angle(row[1], steering_left, images, steerings)
         #right
+        getImageArray3angle(row[2], steering_right, images, steerings)
         
     
     return (np.array(images), np.array(steerings))
@@ -116,7 +125,7 @@ if __name__ == "__main__":
 
     
     #Make sure to set batch size within 40
-    is_dataset = True
+    is_dataset = False
     # is_dataset = False
     
     #When making "is_dataset" True, saving preprocessed datasets
