@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     
     #Make sure to set batch size within 40
-    is_dataset = True
+    is_dataset = False
     # is_dataset = False
     
     #When making "is_dataset" True, saving preprocessed datasets
