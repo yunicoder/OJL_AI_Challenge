@@ -19,8 +19,8 @@ from keras.backend import tensorflow_backend as backend
 NVIDIA = "nvidia"
 RESNET50 = "resnet50"
 
-# MODEL_NAME = NVIDIA
-MODEL_NAME = RESNET50
+MODEL_NAME = NVIDIA
+# MODEL_NAME = RESNET50
 
 
 def getrowsFromDrivingLogs(dataPath):
@@ -47,11 +47,20 @@ def getImagesAndSteerings(rows):
     for row in tqdm(rows):
         #angle
         steering = float(row[3])
+        
+        # 左右のカメラのステアリング測定値を調整します
+        parameter = 0.15 
+        # このパラメータが調整用の値です。
+        # 左のカメラはステアリング角度が実際よりも低めに記録されているので、少し値を足してやります。右のカメラはその逆です。
+        steering_left = steering + parameter
+        steering_right = steering - parameter
+        
         #center
         getImageArray3angle(row[0], steering, images, steerings)
         #left
-
+        getImageArray3angle(row[1], steering_left, images, steerings)
         #right
+        getImageArray3angle(row[2], steering_right, images, steerings)
         
     
     return (np.array(images), np.array(steerings))
