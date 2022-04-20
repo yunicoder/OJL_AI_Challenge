@@ -11,7 +11,7 @@ from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D, Dropout, Ma
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 
-from models.resnet import resnet50_model
+from utils.resnet import resnet50_model
 from keras.backend import tensorflow_backend as backend
 
 
