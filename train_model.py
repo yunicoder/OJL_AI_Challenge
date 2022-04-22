@@ -9,20 +9,21 @@ from sklearn.model_selection import train_test_split
 
 from utils.resnet import resnet50_model
 from keras.backend import tensorflow_backend as backend
+import cv2
 
 
 # model name
 NVIDIA = "nvidia"
 RESNET50 = "resnet50"
 
-MODEL_NAME = NVIDIA
-# MODEL_NAME = RESNET50
+# MODEL_NAME = NVIDIA
+MODEL_NAME = RESNET50
 
 
 def option_parser() -> str:
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source_training_data_path',
-                        required=True,
+                        default='trainingData.h5',
                         type=str,
                         help='path to source training data file')
     args = parser.parse_args()
@@ -39,6 +40,15 @@ def trainModelAndSave(model, inputs, outputs, epochs, batch_size):
     model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, verbose=1, validation_data=(X_valid, y_valid))
     #Saving model
     model.save("models/" + MODEL_NAME + ".h5")
+
+
+def preprocessing(model, inputs, outputs):
+    # resize to fit model input
+    images = []
+    for input in inputs:
+        image = cv2.resize(input, (model.input_shape[2], model.input_shape[1]), interpolation=cv2.INTER_LINEAR)
+        images.append(image)
+    return np.array(images), outputs
 
 
 #NVIDIA
@@ -69,14 +79,31 @@ def main(source_training_data_path):
         batch_size = 5
         model = resnet50_model()
 
-    with h5py.File(source_training_data_path, 'r') as f:
-        inputs = np.array(f['inputs'])
-        outputs = np.array(f['outputs'])
+    use_data_path = [
+        # "./data_center.h5",
+        # "./data_left_corner.h5",
+        # "./data_right_corner.h5",
+        "./trainingData.h5",
+    ]
+
+    for i, path in enumerate(use_data_path):
+        if i == 0:
+            with h5py.File(path, 'r') as f:
+                inputs = np.array(f['inputs'])
+                outputs = np.array(f['outputs'])
+        else:
+            with h5py.File(path, 'r') as f:
+                inputs = np.concatenate([inputs, np.array(f['inputs'])], axis=0)
+                outputs = np.concatenate([outputs, np.array(f['outputs'])], axis=0)
+
 
     print('Training data:', inputs.shape)
     print('Training label:', outputs.shape)
 
     print("start " + MODEL_NAME + " model training...")
+
+    # preprocessing
+    inputs, outputs = preprocessing(model, inputs, outputs)
         
     #Training and saving model
     trainModelAndSave(model, inputs, outputs, epochs, batch_size)

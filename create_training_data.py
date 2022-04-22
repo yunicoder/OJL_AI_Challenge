@@ -6,19 +6,6 @@ import cv2
 import h5py
 import numpy as np
 
-from sklearn.model_selection import train_test_split
-
-from utils.resnet import resnet50_model
-from keras.backend import tensorflow_backend as backend
-
-
-# model name
-NVIDIA = "nvidia"
-RESNET50 = "resnet50"
-
-MODEL_NAME = NVIDIA
-# MODEL_NAME = RESNET50
-
 
 def getrowsFromDrivingLogs(dataPath):
     rows = []
@@ -32,8 +19,6 @@ def getrowsFromDrivingLogs(dataPath):
 def getImageArray3angle(imagePath, steering, images, steerings):
     originalImage = cv2.imread(imagePath.strip())
     image = cv2.cvtColor(originalImage, cv2.COLOR_BGR2RGB)
-    if MODEL_NAME == RESNET50:
-      image = cv2.resize(image, dsize=(480,240)) # for resnet50
     images.append(image)
     steerings.append(steering)
 
@@ -55,11 +40,14 @@ def getImagesAndSteerings(rows):
         steering_right = steering - parameter
         
         #center
-        getImageArray3angle(row[0], steering, images, steerings)
+        if row[0]:
+            getImageArray3angle(row[0], steering, images, steerings)
         #left
-        getImageArray3angle(row[1], steering_left, images, steerings)
+        if row[1]:
+            getImageArray3angle(row[1], steering_left, images, steerings)
         #right
-        getImageArray3angle(row[2], steering_right, images, steerings)
+        if row[2]:
+            getImageArray3angle(row[2], steering_right, images, steerings)
         
     
     return (np.array(images), np.array(steerings))
