@@ -10,7 +10,7 @@ def resnet50_model():
     top_model.add(Flatten(input_shape=model.output_shape[1:]))
     top_model.add(Dense(256, activation='relu'))
     top_model.add(Dropout(0.5))
-    top_model.add(Dense(1, activation='sigmoid'))
+    top_model.add(Dense(1, activation='tanh'))
     model = Model(input=model.input, output=top_model(model.output))
 
 
