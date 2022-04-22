@@ -1,0 +1,32 @@
+name: Error Test
+
+on: 
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.5.6"
+
+      # 環境構築
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r conda-gpu_requirements.txt
+      
+      # h5データの生成
+      - name: Create training data
+        run: |
+          python create_training_data.py
+        continue-on-error: true
+      
+      # test_traininigDataを使ったモデルの学習
+      - name: Create model using test_traininigData.h5
+        run: |
+          python train_model.py --source_training_data_path test_traininigData.h5
