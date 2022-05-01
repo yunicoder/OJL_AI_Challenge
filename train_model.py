@@ -31,24 +31,46 @@ def option_parser() -> str:
     return args.source_training_data_path
 
 
-def trainModelAndSave(model, inputs, outputs, epochs, batch_size):
-    
-    X_train, X_valid, y_train, y_valid = train_test_split(inputs, outputs, test_size=0.2, shuffle=True)
+def trainModelAndSave(model, inputs, outputs, must_train_inputs, must_train_outputs, epochs, batch_size):
+    is_validation = False
+
+    if is_validation:
+        X_train, X_valid, y_train, y_valid = train_test_split(inputs, outputs, test_size=0.2, shuffle=True)
+        X_train = np.concatenate([X_train, must_train_inputs], axis=0)
+        y_train = np.concatenate([y_train, must_train_outputs], axis=0)
+    else:
+        inputs = np.concatenate([inputs, must_train_inputs], axis=0)
+        outputs = np.concatenate([outputs, must_train_outputs], axis=0)
     #Setting model
     model.compile(loss='mean_squared_error', optimizer=Adam(lr=1.0e-4))
     #Learning model
-    model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, verbose=1, validation_data=(X_valid, y_valid))
+    if is_validation:
+        model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, verbose=1, validation_data=(X_valid, y_valid))
+    else:
+        model.fit(inputs, outputs, batch_size=batch_size, nb_epoch=epochs, verbose=1)
     #Saving model
     model.save("models/" + MODEL_NAME + ".h5")
 
 
-def preprocessing(model, inputs, outputs):
-    # resize to fit model input
+def preprocessing(model_input_shape, inputs, outputs, is_flip=False):
     images = []
-    for input in inputs:
-        image = cv2.resize(input, (model.input_shape[2], model.input_shape[1]), interpolation=cv2.INTER_LINEAR)
+    steerings = []
+    
+    for input, output in zip(inputs, outputs):
+        # resize to fit model input
+        image = cv2.resize(input, (model_input_shape[2], model_input_shape[1]), interpolation=cv2.INTER_LINEAR)
         images.append(image)
-    return np.array(images), outputs
+        steerings.append(output)
+
+        # flip
+        if is_flip:
+            image_flip = cv2.flip(image,1)
+            steering_flip = -output
+            images.append(image_flip)
+            steerings.append(steering_flip)
+
+    return np.array(images), np.array(steerings)
+
 
 
 #NVIDIA
@@ -69,6 +91,32 @@ def nvidia_model():
     return model
 
 
+def prepareData(data_path, model_input_shape, is_flip=False):
+    for i, path in enumerate(data_path):
+        print(path)
+        if i == 0:
+            with h5py.File(path, 'r') as f:
+                inputs, outputs = preprocessing(
+                    model_input_shape,
+                    np.array(f['inputs']),
+                    np.array(f['outputs']),
+                    is_flip
+                )
+        else:
+            with h5py.File(path, 'r') as f:
+                _inputs, _outputs = preprocessing(
+                    model_input_shape,
+                    np.array(f['inputs']),
+                    np.array(f['outputs']),
+                    is_flip
+                )
+
+                inputs = np.concatenate([inputs,_inputs], axis=0)
+                outputs = np.concatenate([outputs, _outputs], axis=0)
+
+    return inputs, outputs
+
+
 def main(source_training_data_path):
     if MODEL_NAME == NVIDIA:
         epochs = 10
@@ -81,32 +129,34 @@ def main(source_training_data_path):
 
     use_data_path = [
         # "./data_center.h5",
+        # "./data_first_corce_out.h5",
+        # "./data_normal_cycle.h5",
         # "./data_left_corner.h5",
-        # "./data_right_corner.h5",
         "./trainingData.h5",
     ]
+    must_train_data_path = [
+        # "./trainingData.h5",
+        "./temp_trainingData.h5",
+        # "./data_bridge.h5",
+        # "./data_patch_second_corner.h5",
+    ]
 
-    for i, path in enumerate(use_data_path):
-        if i == 0:
-            with h5py.File(path, 'r') as f:
-                inputs = np.array(f['inputs'])
-                outputs = np.array(f['outputs'])
-        else:
-            with h5py.File(path, 'r') as f:
-                inputs = np.concatenate([inputs, np.array(f['inputs'])], axis=0)
-                outputs = np.concatenate([outputs, np.array(f['outputs'])], axis=0)
+    
+    inputs, outputs = prepareData(use_data_path, model.input_shape, is_flip=False)
+    must_train_inputs, must_train_outputs = prepareData(must_train_data_path, model.input_shape, is_flip=False)
 
 
-    print('Training data:', inputs.shape)
-    print('Training label:', outputs.shape)
+    print('Training data: ', inputs.shape)
+    print('Training label: ', outputs.shape)
+    
+    print('must train data count: ', must_train_inputs.shape[0])
+    print('all train data count: ', inputs.shape[0]+must_train_inputs.shape[0])
+
 
     print("start " + MODEL_NAME + " model training...")
 
-    # preprocessing
-    inputs, outputs = preprocessing(model, inputs, outputs)
-        
     #Training and saving model
-    trainModelAndSave(model, inputs, outputs, epochs, batch_size)
+    trainModelAndSave(model, inputs, outputs, must_train_inputs, must_train_outputs, epochs, batch_size)
 
     backend.clear_session()
 

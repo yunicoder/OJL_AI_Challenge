@@ -3,8 +3,7 @@ import argparse
 import csv
 
 def getImageName(path):
-    s = path.rfind('\\')
-    return path[s+1:]
+    return os.path.basename(path)
 
 def getUseDataPath(data_path):
     rows = []
@@ -29,7 +28,8 @@ def deleteUnuseImage(data_path, use_image_name):
         if file not in use_image_name:
                 cnt += 1
 
-    print('{}/IMG/内の使用していないファイル({}件)を本当に削除しますか？(y/n) : '.format(data_path, cnt), end='')
+#     print('{}/IMG/内の使用していないファイル({}件)を本当に削除しますか？(y/n) : '.format(data_path, cnt), end='')
+    print('do you wanna delete {} files (path: {}/IMG)?(y/n):'.format(cnt, data_path), end='')
     s = input()
 
     cnt = 0
@@ -39,7 +39,7 @@ def deleteUnuseImage(data_path, use_image_name):
                 os.remove(data_path+'/IMG/'+file)
                 cnt += 1
 
-        print("{} 件削除しました".format(cnt))
+        print("delete {} files".format(cnt))
         
 def main(data_path):
     use_image_name = getUseDataPath(data_path)

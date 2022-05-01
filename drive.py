@@ -59,15 +59,20 @@ def telemetry(sid, data):
             steering_angle = float(model.predict(image, batch_size=1))
 
             # Controlling speed
-            MAX_SPEED = 20
+            MAX_SPEED = 18
             MIN_SPEED = 8
             
-            if float(speed) > MAX_SPEED:
-                throttle = -1.0
-            elif float(speed) < MIN_SPEED:
-                throttle = 1.0
-            else:
-                throttle = 0.2
+            zero_steearing = 0.05
+            if -zero_steearing < steering_angle < zero_steearing:
+                steering_angle = 0
+            
+            throttle = 1.0
+#             if float(speed) > MAX_SPEED:
+#                 throttle = -1.0
+#             elif float(speed) < MIN_SPEED:
+#                 throttle = 1.0
+#             else:
+#                 throttle = 0.05
 
             print('steering_angle:{} throttle:{} speed:{}'.format(steering_angle, throttle, speed))
             send_control(steering_angle, throttle)
@@ -109,5 +114,5 @@ if __name__ == '__main__':
 
     # Activating WSGI server
     app = socketio.Middleware(sio, app)
-    eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
-    # eventlet.wsgi.server(eventlet.listen(('', 55021)), app)
+#     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
+    eventlet.wsgi.server(eventlet.listen(('', 55021)), app)
