@@ -73,8 +73,7 @@ def nvidia_model():
     return model
 
 
-def prepare_data(train_cfg, model_input_shape):
-    def preprocessing(model_input_shape, inputs, outputs, flip):
+def preprocessing(model_input_shape, inputs, outputs, flip):
         images = []
         steerings = []
         
@@ -94,6 +93,7 @@ def prepare_data(train_cfg, model_input_shape):
         return np.array(images), np.array(steerings)
 
 
+def prepare_data(train_cfg, model_input_shape):
     inputs = outputs = None
     for train_data_name, cfg in train_cfg.items():
         train_data_path = './training_data/' + train_data_name + '.h5'
