@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # data
-data/
+data_each_situation/
 *.h5
 
 # model
