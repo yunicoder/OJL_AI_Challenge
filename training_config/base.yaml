@@ -1,0 +1,9 @@
+use_data:
+  base1:
+    flip: True
+  base2:
+    flip: True
+
+must_train_data:
+  base3:
+    flip: True

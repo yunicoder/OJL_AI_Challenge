@@ -98,7 +98,14 @@ def prepare_data(train_cfg, model_input_shape):
     for train_data_name, cfg in train_cfg.items():
         train_data_path = './training_data/' + train_data_name + '.h5'
         with h5py.File(train_data_path, 'r') as f:
-            if(inputs):
+            if(inputs == None):
+                inputs, outputs = preprocessing(
+                    model_input_shape,
+                    np.array(f['inputs']),
+                    np.array(f['outputs']),
+                    **cfg
+                )
+            else:
                 _inputs, _outputs = preprocessing(
                     model_input_shape,
                     np.array(f['inputs']),
@@ -107,13 +114,6 @@ def prepare_data(train_cfg, model_input_shape):
                 )
                 inputs = np.concatenate([inputs,_inputs], axis=0)
                 outputs = np.concatenate([outputs, _outputs], axis=0)
-            else:
-                inputs, outputs = preprocessing(
-                    model_input_shape,
-                    np.array(f['inputs']),
-                    np.array(f['outputs']),
-                    **cfg
-                )
 
     return inputs, outputs
 
