@@ -28,7 +28,7 @@ def main():
 
     ### 画像パスリストをImageSequenceClipに渡す
     clip = ImageSequenceClip(image_list, fps=args.fps)
-    video_file = './data_each_situation/' + args.data_folder_name + '.mp4'
+    video_file = './data_each_situation/' + args.data_folder_name + '/' + args.data_folder_name + '.mp4'
     
     print('make movie. file name is {}.mp4'.format(args.data_folder_name))
     clip.write_videofile(video_file)
