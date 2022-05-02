@@ -98,7 +98,7 @@ def prepare_data(train_cfg, model_input_shape):
     for train_data_name, cfg in train_cfg.items():
         train_data_path = './training_data/' + train_data_name + '.h5'
         with h5py.File(train_data_path, 'r') as f:
-            if(inputs == None):
+            if(inputs is None):
                 inputs, outputs = preprocessing(
                     model_input_shape,
                     np.array(f['inputs']),
