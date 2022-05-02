@@ -1,0 +1,7 @@
+use_data:
+  base:
+    flip: False
+
+must_train_data:
+  base:
+    flip: True

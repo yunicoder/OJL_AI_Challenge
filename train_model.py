@@ -1,15 +1,18 @@
 import argparse
 import h5py
+import cv2
+import yaml
 import numpy as np
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D, Dropout, MaxPooling2D
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
+from typing import Tuple, Dict, List
 
 from utils.resnet import resnet50_model
 from keras.backend import tensorflow_backend as backend
-import cv2
+
 
 
 # model name
@@ -22,13 +25,13 @@ MODEL_NAME = RESNET50
 
 def option_parser() -> str:
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--source_training_data_path',
-                        default='trainingData.h5',
+    parser.add_argument('-c', '--train_cfg_name',
+                        required=True,
                         type=str,
-                        help='path to source training data file')
+                        help='training_config/[This arg].yaml')
     args = parser.parse_args()
 
-    return args.source_training_data_path
+    return args.train_cfg_name
 
 
 def trainModelAndSave(model, inputs, outputs, must_train_inputs, must_train_outputs, epochs, batch_size):
@@ -52,27 +55,6 @@ def trainModelAndSave(model, inputs, outputs, must_train_inputs, must_train_outp
     model.save("models/" + MODEL_NAME + ".h5")
 
 
-def preprocessing(model_input_shape, inputs, outputs, is_flip=False):
-    images = []
-    steerings = []
-    
-    for input, output in zip(inputs, outputs):
-        # resize to fit model input
-        image = cv2.resize(input, (model_input_shape[2], model_input_shape[1]), interpolation=cv2.INTER_LINEAR)
-        images.append(image)
-        steerings.append(output)
-
-        # flip
-        if is_flip:
-            image_flip = cv2.flip(image,1)
-            steering_flip = -output
-            images.append(image_flip)
-            steerings.append(steering_flip)
-
-    return np.array(images), np.array(steerings)
-
-
-
 #NVIDIA
 def nvidia_model():
     model = Sequential()
@@ -91,33 +73,53 @@ def nvidia_model():
     return model
 
 
-def prepareData(data_path, model_input_shape, is_flip=False):
-    for i, path in enumerate(data_path):
-        print(path)
-        if i == 0:
-            with h5py.File(path, 'r') as f:
-                inputs, outputs = preprocessing(
-                    model_input_shape,
-                    np.array(f['inputs']),
-                    np.array(f['outputs']),
-                    is_flip
-                )
-        else:
-            with h5py.File(path, 'r') as f:
+def prepare_data(train_cfg, model_input_shape):
+    def preprocessing(model_input_shape, inputs, outputs, flip):
+        images = []
+        steerings = []
+        
+        for input, output in zip(inputs, outputs):
+            ### resize to fit model input
+            image = cv2.resize(input, (model_input_shape[2], model_input_shape[1]), interpolation=cv2.INTER_LINEAR)
+            images.append(image)
+            steerings.append(output)
+
+            ### flip
+            if flip:
+                image_flip = cv2.flip(image,1)
+                steering_flip = -output
+                images.append(image_flip)
+                steerings.append(steering_flip)
+
+        return np.array(images), np.array(steerings)
+
+
+    inputs = outputs = None
+    for train_data_name, cfg in train_cfg.items():
+        train_data_path = './training_data/' + train_data_name + '.h5'
+        with h5py.File(train_data_path, 'r') as f:
+            if(inputs):
                 _inputs, _outputs = preprocessing(
                     model_input_shape,
                     np.array(f['inputs']),
                     np.array(f['outputs']),
-                    is_flip
+                    **cfg
                 )
-
                 inputs = np.concatenate([inputs,_inputs], axis=0)
                 outputs = np.concatenate([outputs, _outputs], axis=0)
+            else:
+                inputs, outputs = preprocessing(
+                    model_input_shape,
+                    np.array(f['inputs']),
+                    np.array(f['outputs']),
+                    **cfg
+                )
 
     return inputs, outputs
 
 
-def main(source_training_data_path):
+def main(train_cfg_name):
+    ### create model
     if MODEL_NAME == NVIDIA:
         epochs = 10
         batch_size = 40
@@ -127,40 +129,26 @@ def main(source_training_data_path):
         batch_size = 5
         model = resnet50_model()
 
-    use_data_path = [
-        # "./data_center.h5",
-        # "./data_first_corce_out.h5",
-        # "./data_normal_cycle.h5",
-        # "./data_left_corner.h5",
-        "./trainingData.h5",
-    ]
-    must_train_data_path = [
-        # "./trainingData.h5",
-        "./temp_trainingData.h5",
-        # "./data_bridge.h5",
-        # "./data_patch_second_corner.h5",
-    ]
+    ### load training config
+    train_cfg_path = './training_config/' + train_cfg_name + '.yaml'
+    with open(train_cfg_path, 'r') as f:
+        train_cfg_ori = yaml.load(f)
 
-    
-    inputs, outputs = prepareData(use_data_path, model.input_shape, is_flip=False)
-    must_train_inputs, must_train_outputs = prepareData(must_train_data_path, model.input_shape, is_flip=False)
-
-
+    ### prepare data
+    inputs, outputs = prepare_data(train_cfg_ori['use_data'], model.input_shape)
+    must_train_inputs, must_train_outputs = prepare_data(train_cfg_ori['must_train_data'], model.input_shape)
     print('Training data: ', inputs.shape)
     print('Training label: ', outputs.shape)
-    
     print('must train data count: ', must_train_inputs.shape[0])
     print('all train data count: ', inputs.shape[0]+must_train_inputs.shape[0])
 
-
+    ### Training and saving model
     print("start " + MODEL_NAME + " model training...")
-
-    #Training and saving model
     trainModelAndSave(model, inputs, outputs, must_train_inputs, must_train_outputs, epochs, batch_size)
 
     backend.clear_session()
 
 
 if __name__ == '__main__':
-    source_training_data_path = option_parser()
-    main(source_training_data_path)
+    train_cfg_name = option_parser()
+    main(train_cfg_name)
