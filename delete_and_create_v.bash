@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DATA_DIRS=(curve2_always_center curve2_always_in curve2_always_out curve3_always_center curve3_always_in curve3_always_out curve4_always_center curve4_always_in curve4_always_out)
+DATA_DIRS=(bridge_recovery_from_left2 bridge_recovery_from_right2 bridge_to_curve2_from_in_to_center bridge_to_curve2_from_out_to_center)
 
 
 ### delete unused image

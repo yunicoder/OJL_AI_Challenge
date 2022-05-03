@@ -11,23 +11,31 @@ must_train_data:
     flip: False
   curve1_always_in:
     flip: False
-  curve1_always_out:
-    flip: False
   curve2_always_center:
     flip: False
   curve2_always_in:
-    flip: False
-  curve2_always_out:
     flip: False
   curve3_always_center:
     flip: False
   curve3_always_in:
     flip: False
-  curve3_always_out:
-    flip: False
   curve4_always_center:
     flip: False
   curve4_always_in:
     flip: False
-  curve4_always_out:
+  bridge_recovery_from_left:
+    flip: False
+  bridge_recovery_from_right:
+    flip: False
+  curve3_from_in_to_center:
+    flip: False
+  curve3_from_out_to_center:
+    flip: False
+  bridge_recovery_from_left2:
+    flip: False
+  bridge_recovery_from_right2:
+    flip: False
+  bridge_to_curve2_from_in_to_center:
+    flip: False
+  bridge_to_curve2_from_out_to_center:
     flip: False
