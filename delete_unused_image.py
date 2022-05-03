@@ -29,17 +29,17 @@ def deleteUnuseImage(data_path, use_image_name):
                 cnt += 1
 
 #     print('{}/IMG/内の使用していないファイル({}件)を本当に削除しますか？(y/n) : '.format(data_path, cnt), end='')
-    print('do you wanna delete {} files (path: {}/IMG)?(y/n):'.format(cnt, data_path), end='')
-    s = input()
+    # print('do you wanna delete {} files (path: {}/IMG)?(y/n):'.format(cnt, data_path), end='')
+    # s = input()
 
-    cnt = 0
-    if s == "y":
-        for file in files:
-            if file not in use_image_name:
-                os.remove(data_path+'/IMG/'+file)
-                cnt += 1
+    # cnt = 0
+    # if s == "y":
+    for file in files:
+        if file not in use_image_name:
+            os.remove(data_path+'/IMG/'+file)
+            cnt += 1
 
-        print("delete {} files".format(cnt))
+    print("delete {} files".format(cnt))
         
 def main(data_path):
     use_image_name = getUseDataPath(data_path)

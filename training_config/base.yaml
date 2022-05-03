@@ -13,3 +13,21 @@ must_train_data:
     flip: False
   curve1_always_out:
     flip: False
+  curve2_always_center:
+    flip: False
+  curve2_always_in:
+    flip: False
+  curve2_always_out:
+    flip: False
+  curve3_always_center:
+    flip: False
+  curve3_always_in:
+    flip: False
+  curve3_always_out:
+    flip: False
+  curve4_always_center:
+    flip: False
+  curve4_always_in:
+    flip: False
+  curve4_always_out:
+    flip: False
