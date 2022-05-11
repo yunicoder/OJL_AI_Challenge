@@ -19,8 +19,8 @@ from keras.backend import tensorflow_backend as backend
 NVIDIA = "nvidia"
 RESNET50 = "resnet50"
 
-# MODEL_NAME = NVIDIA
-MODEL_NAME = RESNET50
+MODEL_NAME = NVIDIA
+# MODEL_NAME = RESNET50
 
 
 def option_parser() -> str:
