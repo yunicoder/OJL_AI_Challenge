@@ -5,7 +5,7 @@
 pip install -r requirements.txt
 ```
 
-## Uses
+## Usage
 
 1. create data directory
 ```
