@@ -1,64 +1,93 @@
 import os
-import cv2
 import csv
-from tqdm import tqdm
 import cv2
 import h5py
+import argparse
 import numpy as np
 
+from tqdm import tqdm
 
-def getrowsFromDrivingLogs(dataPath):
+
+def option_parser() -> str:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--data_dir_name',
+                        required=True,
+                        type=str,
+                        help='./data_each_situation/[THIS ARG]')
+    args = parser.parse_args()
+
+    return args.data_dir_name
+
+
+def getrowsFromDrivingLogs(dataDir):
     rows = []
-    with open(dataPath + '/driving_log.csv') as csvFile:
+    with open(dataDir + '/driving_log.csv') as csvFile:
         reader = csv.reader(csvFile)            
         for row in reader:
             rows.append(row)
     return rows
 
 
-def getImageArray3angle(imagePath, steering, images, steerings):
-    originalImage = cv2.imread(imagePath.strip())
-    image = cv2.cvtColor(originalImage, cv2.COLOR_BGR2RGB)
-    images.append(image)
-    steerings.append(steering)
+def getImagesAndSteerings(data_dir, rows):
+    def getImageArray3angle(imagePath, steering, images, steerings):
+        originalImage = cv2.imread(imagePath.strip())
+        image = cv2.cvtColor(originalImage, cv2.COLOR_BGR2RGB)
+        images.append(image)
+        steerings.append(steering)
+
+    def getRelativeImagePath(ori_image_path, data_dir) -> str:
+        relative_image_path = (data_dir
+                               + '/IMG/'
+                               + os.path.basename(ori_image_path))
+
+        return relative_image_path
 
 
-def getImagesAndSteerings(rows):
-    
     images = []
     steerings = []
     
     for row in tqdm(rows):
-        #angle
         steering = float(row[3])
-        
-        # 左右のカメラのステアリング測定値を調整します
-        parameter = 0.15 
-        # このパラメータが調整用の値です。
-        # 左のカメラはステアリング角度が実際よりも低めに記録されているので、少し値を足してやります。右のカメラはその逆です。
+
+        ### 左右のカメラのステアリング測定値を調整
+        parameter = 0.05  # このパラメータが調整用の値
         steering_left = steering + parameter
         steering_right = steering - parameter
-        
-        #center
+
+        ### getImageArray3angle
+        # center
         if row[0]:
-            getImageArray3angle(row[0], steering, images, steerings)
-        #left
+            getImageArray3angle(getRelativeImagePath(row[0], data_dir),
+                                steering,
+                                images,
+                                steerings)
+        # left
         if row[1]:
-            getImageArray3angle(row[1], steering_left, images, steerings)
-        #right
+            getImageArray3angle(getRelativeImagePath(row[1], data_dir),
+                                steering_left,
+                                images,
+                                steerings)
+        # right
         if row[2]:
-            getImageArray3angle(row[2], steering_right, images, steerings)
-        
-    
+            getImageArray3angle(getRelativeImagePath(row[2], data_dir),
+                                steering_right,
+                                images,
+                                steerings)
+
     return (np.array(images), np.array(steerings))
 
 
 if __name__ == '__main__':
+    data_dir_name = option_parser()
+    data_dir = 'data_each_situation/' + data_dir_name
+
     print('get csv data from Drivinglog.csv')
-    rows = getrowsFromDrivingLogs('data')
+    rows = getrowsFromDrivingLogs(data_dir)
     print('preprocessing data...')
-    inputs, outputs = getImagesAndSteerings(rows)
-    
-    with h5py.File('./trainingData.h5', 'w') as f:
+    inputs, outputs = getImagesAndSteerings(data_dir, rows)
+
+    ### Create training data file (.h5)
+    out_file_path = './training_data/' + data_dir_name + '.h5'
+    with h5py.File(out_file_path, 'w') as f:
         f.create_dataset('inputs', data=inputs)
         f.create_dataset('outputs', data=outputs)
