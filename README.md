@@ -17,6 +17,7 @@ mkdir data_each_situation/[data_name]
 ```
 
 2. create data by running simulator
+
 Data should store in data_each_situation/[data_name]
 
 3. convert data to h5 
