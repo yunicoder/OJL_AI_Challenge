@@ -12,7 +12,7 @@
 
 1.1. データを保存するディレクトリの作成
 ```
-mkdir data_each_situation/base
+mkdir data_each_situation/base2
 ```
 
 1.2. シミュレータを起動して、base2というディレクトリに新しいデータを集める
