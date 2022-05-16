@@ -53,7 +53,19 @@ python drive.py models/nvidia.h5
 
 ## 2. モデルを変更する
 
-///
+`train_model.py`内の以下の部分を変更する。
+
+```
+# 元々こうなっている
+MODEL_NAME = NVIDIA
+# MODEL_NAME = RESNET50
+
+
+# このように変更
+# MODEL_NAME = NVIDIA
+MODEL_NAME = RESNET50
+```
+
 
 ## 3. drive.pyを変更する
 
